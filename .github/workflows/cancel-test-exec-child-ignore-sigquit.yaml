@@ -1,0 +1,17 @@
+name: Cancel test ignoring all signals
+on:
+  - workflow_dispatch
+jobs:
+  cancel-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: wait for signal
+        run: |
+          # This demo ignores everything relevant (except SIGKILL, which
+          # is of course not ignore-able), so you can see the timing of
+          # github's signals on cancel, and which ones will get delivered.
+          exec python3 signaller.py SIGINT SIGQUIT SIGTERM
+      - if: always()
+        run: |
+          cat signaller.log

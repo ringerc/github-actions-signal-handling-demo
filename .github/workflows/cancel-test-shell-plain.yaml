@@ -1,0 +1,25 @@
+name: Cancel test with simplistic child proc
+on:
+  - workflow_dispatch
+jobs:
+  cancel-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: wait for signal
+        run: |
+          # Run the signal-ignoring utility script as a simple
+          # child process of the default bash shell.
+          #
+          # You will see that it does NOT ever get to see SIGINT
+          # and is hard-killed (presumably by SIGKILL) without any
+          # warning.
+          # 
+          # Note that adding bash traps for SIGINT won't help here,
+          # see the notes in the wrapper script for why.
+          #
+          trap 'echo this will never run' SIGINT
+          python3 ./signaller.py SIGINT
+      - if: always()
+        run: |
+          cat signaller.log

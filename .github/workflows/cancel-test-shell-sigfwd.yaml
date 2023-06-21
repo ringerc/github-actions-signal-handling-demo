@@ -1,0 +1,17 @@
+name: Cancel test with signal-forwarding shell
+on:
+  - workflow_dispatch
+jobs:
+  cancel-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: wait for signal
+        run: |
+          # Run the signal-ignoring utility script under the control
+          # of a bash wrapper that tries to propagate signals, then
+          # wait for child proc exit before it exits in turn
+          exec bash ./signal_forwarding_wrapper.sh SIGINT
+      - if: always()
+        run: |
+          cat signaller.log

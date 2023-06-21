@@ -1,0 +1,17 @@
+name: Cancel test with exec child
+on:
+  - workflow_dispatch
+jobs:
+  cancel-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: wait for signal
+        run: |
+          # The signal-ignoring script becomes the top process
+          # so github will signal it directly with SIGINT then
+          # SIGTERM after a delay.
+          exec python3 signaller.py SIGINT
+      - if: always()
+        run: |
+          cat signaller.log

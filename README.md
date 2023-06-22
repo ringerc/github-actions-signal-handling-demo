@@ -25,9 +25,9 @@ signals on cancel.
 
 ## The demo code
 
-Five github actions demonstrate how github job cancellation signal handling
-works. To try them you must run them via github actions, then cancel them
-using the github actions UI.
+A set of github actions demonstrate how github job cancellation signal handling
+works. To try them you must run them via github actions, then cancel them using
+the github actions UI.
 
 * [`cancel-test-exec-child-ignore-sigquit.yaml`](.github/workflows/cancel-test-exec-child-ignore-sigquit.yaml):
   `exec`'s [a script](./signaller.py) that ignores `SIGINT`, `SIGQUIT` and
@@ -80,6 +80,19 @@ using the github actions UI.
   Interestingly, it the job won't retain logs if the cleanup job doesn't exit
   within the overall job timeout, you can only see the logs if you were
   streaming them during the run.
+
+* [`test-daemonize.yaml`](.github/workflows/test-daemonize.yaml) and [`test-daemonize-cancel.yaml`](.github/workflows/test-daemonize-cancel.yaml):
+  Shows that by detaching from the current session a process can remain running
+  after the end of the containing step, or the cancellation of the step.
+
+  So it's *not* possible to rely on Github to terminate everything running
+  under a step; there could still be workloads running when your `if: always()`
+  steps run after cancellation of work. You may need to ensure you record
+  their pids and kill them yourself before handling cleanup.
+
+  I presume they're destroyed when the containing `job` is cleaned up - I
+  didn't bother giving the task telemetry to some public endpoint so it could
+  report how long it stays running for.
 
 ## Why child-process tasks don't get a chance to clean up on job cancel
 

@@ -1,0 +1,32 @@
+name: Cancel test long running cleanup
+on:
+  - workflow_dispatch
+jobs:
+  cancel-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: wait for signal
+        run: |
+          # this job will execute gracefully on the SIGINT
+          # sent by the cancel request since it respects all
+          # fatal signals.
+          exec python3 signaller.py ""
+      - if: always()
+        name: cleanup
+        run: |
+          ps -efH
+          cat signaller.log
+      - if: always()
+        name: longrunning-cleanup
+        run: |
+          # this if: always() block then runs ignoring all relevant fatal
+          # signals to see how long github will let it run and what happens
+          # when the time is up.
+          exec python3 signaller.py SIGINT SIGQUIT SIGTERM SIGHUP
+      - if: always()
+        name: cleanup2
+        run: |
+          # now see what happened
+          ps -efH
+          cat signaller.log

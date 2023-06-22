@@ -31,7 +31,7 @@ def main(args):
     if not continue_args_list:
         # by default, mask SIGINT
         continue_args_list = ['SIGINT']
-    continue_on_sigs = [ signal.Signals[signame.upper()] for signame in continue_args_list ]
+    continue_on_sigs = [ signal.Signals[signame.upper()] for signame in continue_args_list if signame != "" ]
     print_msg(f"continue on sigs: {continue_on_sigs}")
     for sig in fatal_sigs:
         signal.signal(sig, handler)

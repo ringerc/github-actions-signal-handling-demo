@@ -25,7 +25,7 @@ signals on cancel.
 
 ## The demo code
 
-Four github actions demonstrate how github job cancellation signal handling
+Five github actions demonstrate how github job cancellation signal handling
 works. To try them you must run them via github actions, then cancel them
 using the github actions UI.
 
@@ -40,6 +40,11 @@ using the github actions UI.
   `exec`'s the same script, but only ignores `SIGINT`, so the child process
   will terminate on the subsequent `SIGTERM`. This is more realistic, and the
   subsequent test cases do the same thing.
+
+  Since it checks the process tree in the `if: always()` cleanup step, this
+  test also shows that github destroys all processes under the step recursively
+  before it begins any cleanup steps. It must be keeping track of all
+  processes.
   
 * [`cancel-test-shell-plain.yaml`](.github/workflows/cancel-test-shell-plain.yaml):
   Represents the "normal" case of a github actions step using a bash shell that
@@ -62,6 +67,19 @@ using the github actions UI.
 
   See comments in
   [`signal_forwarding_wrapper.sh`](./signal_forwarding_wrapper.sh) for details.
+
+* [`cancel-test-long-running-if-always.yaml`](.github/workflows/cancel-test-long-running-if-always.yaml):
+  Explores what happens when an `if: always()` step takes too long or
+  refuses to exit.
+
+  It seems like github will let the cleanup run for about 4 minutes then kill
+  it, initially with a `SIGINT`.
+
+  Repeated cancels sent during the `if: always()` run appear to have no effect.
+
+  Interestingly, it the job won't retain logs if the cleanup job doesn't exit
+  within the overall job timeout, you can only see the logs if you were
+  streaming them during the run.
 
 ## Why child-process tasks don't get a chance to clean up on job cancel
 
@@ -165,8 +183,9 @@ possible workarounds:
   works.
 
   It's unclear what the rules for `if: always()` actions are during github
-  actions cancellation. Presumably they don't get to run forever either. So
-  try to make it complete quickly.
+  actions cancellation. From a quick experiment it looks like you've got about
+  4 minutes to complete cleanup, and `if: always()` steps ignore cancel
+  requests.
 
 * Hope that steps inside Docker containers work better?
 
@@ -175,14 +194,9 @@ possible workarounds:
 
 ## To investigate further
 
-* How `if: always()` steps behave during cancel, and what happens when a second
-  cancel request is received during an `if: always()` step
 * How github behaves with jobs using containers
 * Why github actions, which is a *job control system*, doesn't document
   fundamental and basic properties of job cancellation behaviour.
-* If a process ignores all mask-able fatal signals (everything except
-  `SIGKILL`) will it keep running during `if: always()` steps, until the runner
-  job is destroyed? Or is the whole process tree in the step nuked?
 
 ## See also
 

@@ -14,5 +14,6 @@ jobs:
           exec bash ./signal_forwarding_wrapper.sh SIGINT
       - if: always()
         run: |
-          ps -efH
+          cat signaller.pid
           cat signaller.log
+          ps -efH

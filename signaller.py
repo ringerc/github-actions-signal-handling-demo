@@ -4,6 +4,7 @@ import sys
 import os
 import time
 import signal
+import atexit
 
 signaller_log = open("signaller.log", "w")
 
@@ -24,6 +25,11 @@ def handler(signum, frame):
       print_msg(f'exiting on {signal.Signals(signum).name}')
       sys.exit(1)
 
+def remove_pidfile_atexit():
+    try:
+        os.unlink("signaller.pid")
+    except Exception as exc:
+        print_msg(f"unlinking pidfile: {exc}")
 
 def main(args):
     global continue_on_sigs
@@ -37,6 +43,10 @@ def main(args):
         signal.signal(sig, handler)
 
     print_msg(f"my pid is {os.getpid()}")
+    with open("signaller.pid", "w") as pidfile:
+        pidfile.write(f"{os.getpid()}\n")
+        pidfile.flush()
+    atexit.register(remove_pidfile_atexit)
     while True:
       print_msg(f"tick {time.time()}")
       sys.stderr.flush()

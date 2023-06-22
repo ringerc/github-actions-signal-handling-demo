@@ -22,5 +22,6 @@ jobs:
           python3 ./signaller.py SIGINT
       - if: always()
         run: |
-          ps -efH
+          cat signaller.pid
           cat signaller.log
+          ps -efH

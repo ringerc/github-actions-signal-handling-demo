@@ -15,8 +15,9 @@ jobs:
       - if: always()
         name: cleanup
         run: |
-          ps -efH
+          cat signaller.pid
           cat signaller.log
+          ps -efH
       - if: always()
         name: longrunning-cleanup
         run: |
@@ -28,5 +29,6 @@ jobs:
         name: cleanup2
         run: |
           # now see what happened
-          ps -efH
+          cat signaller.pid
           cat signaller.log
+          ps -efH

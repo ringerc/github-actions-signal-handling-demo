@@ -1,0 +1,24 @@
+name: Test daemonized worker with cancel
+on:
+  - workflow_dispatch
+jobs:
+  daemonize-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: daemonize but wait for cancel
+        run: |
+          # Run the signal-ignoring utility script as a detached
+          # daemonized process, trying to disown it completely.
+          # But retain control and wait for it to return, so it's
+          # running in a separate session-id but it's
+          # going to block until a cancel is sent. Block SIGINT with
+          # nohup, so the setsid binary won't exit on the initial cancel
+          # request signal.
+          nohup setsid --fork --wait python3 ./signaller.py SIGINT 0<&- >&/dev/null
+      - if: always()
+        run: |
+          cat signaller.pid
+          ps -f -p "$(cat signaller.pid)"
+          cat signaller.log
+          ps -efH

@@ -1,0 +1,32 @@
+name: Test daemonized worker
+on:
+  - workflow_dispatch
+jobs:
+  daemonize-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: daemonize return immediately
+        run: |
+          # Run the signal-ignoring utility script as a detached
+          # daemonized process, trying to disown it completely.
+          # It's probably sufficient to ( ./signaller.py & )
+          # but setsid is more explicit and robust.
+          setsid --fork python3 ./signaller.py SIGINT
+      - name: look for pid file
+        run: |
+          while ! [ -e signaller.pid ]; do sleep 1; done
+          cat signaller.pid
+          ps -f -p "$(cat signaller.pid)"
+          # we'll leave it running
+      - name: wait a while
+        run: |
+          sleep 200
+      - name: check pid again  
+        run: |
+          ps -f -p "$(cat signaller.pid)"
+          # wonder how long it'll stay alive?
+      - if: always()
+        run: |
+          cat signaller.log
+          ps -efH
